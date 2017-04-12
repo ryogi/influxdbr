@@ -130,6 +130,8 @@ influx_ping <- function(con) {
 #' @param return_xts logical. Sets the return type. If set to TRUE, xts objects
 #' are returned, FALSE gives data.frames.
 #' @param verbose logical. Provide additional details?
+#' @param cast converts results using \code{\link[type.convert]{type.convert}}.
+#' Default TRUE for backwards compatibility.
 #'
 #' @return A list of xts or data.frame objects.
 #' @rdname influx_query
@@ -142,7 +144,8 @@ influx_query <- function(con,
                          query = "SELECT * FROM measurement",
                          timestamp_format = "default",
                          return_xts = TRUE,
-                         verbose = FALSE) {
+                         verbose = FALSE,
+                         cast = TRUE) {
 
   # development options
   debug <-  FALSE
@@ -237,7 +240,7 @@ influx_query <- function(con,
               # convert columns to most appropriate type
               # type.convert needs characters!
               values[] <- lapply(values, as.character)
-              values[] <- lapply(values, type.convert, as.is = TRUE)
+              if(cast) values[] <- lapply(values, type.convert, as.is = TRUE)
 
               # check if response contains columns
               if (exists(x = "columns", where = seriesObj)) {
@@ -510,6 +513,7 @@ influx_write <- function(con,
 #' @param order_desc logical. Change sort order to descending.
 #' @param return_xts logical. Sets the return type. If set to TRUE, xts objects
 #' are returned, FALSE gives data.frames.
+#' @param ... passed to \code{\link[influx_query]}{influx_query}}.
 #'
 #' @return A list of xts or data.frame objects.
 #' @export
@@ -525,7 +529,8 @@ influx_select <- function(con,
                           slimit = FALSE,
                           offset = NULL,
                           order_desc = FALSE,
-                          return_xts = TRUE) {
+                          return_xts = TRUE,
+                          ...) {
 
   if (!is.null(rp)) {
     options("useFancyQuotes" = FALSE)
@@ -558,7 +563,7 @@ influx_select <- function(con,
                          db = db,
                          query = query,
                          return_xts = return_xts,
-                         verbose = FALSE)
+                         verbose = FALSE, ...)
 
   # concatenate list to get a more intuitive list
   result <- do.call(c,result)
